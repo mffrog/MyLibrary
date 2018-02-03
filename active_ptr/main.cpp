@@ -1,10 +1,12 @@
 //
 //  main.cpp
-//  prac
+//  Test
 //
-//  Created by Tomoya Fujii on 2016/10/15.
-//  Copyright © 2016年 TomoyaFujii. All rights reserved.
+//  Created by Tomoya Fujii on 2018/02/03.
+//  Copyright © 2018年 TomoyaFujii. All rights reserved.
 //
+
+#include <iostream>
 
 #include <iostream>
 #include <vector>
@@ -37,22 +39,20 @@ class active_root_ptr{
 public:
     using  ActLinkPtr = std::shared_ptr<active_ptr<Ty>>;
     
-    active_root_ptr(Ty* target):target(target){}
+    active_root_ptr(Ty* target):target(target){
+        struct Impl : active_ptr<Ty>{};
+        link = std::make_shared<Impl>();
+        link->pointer = target;
+        link->isActive = true;
+    }
     
     ActLinkPtr GiveLink(){
-        struct Impl : active_ptr<Ty> {};
-        ActLinkPtr link = std::make_shared<Impl>();
-        link->isActive = true;
-        link->pointer = target;
-        linkList.push_back(link);
         return link;
     }
     
     void Destroy(){
-        for(auto& link : linkList){
-            link->isActive = false;
-            link->pointer = nullptr;
-        }
+        link->isActive = false;
+        link->pointer = nullptr;
         SAFE_DELETE(target);
     }
     
@@ -62,7 +62,7 @@ public:
     
     Ty* operator=(Ty* arg){target = arg;}
 private:
-    std::vector<ActLinkPtr> linkList;
+    ActLinkPtr link;
     Ty* target;
 };
 
@@ -97,20 +97,26 @@ public:
     LinkPtr linkPtr;
 };
 
-int main(){
+int main(int argc, const char * argv[]) {
     active_root_ptr<Parent> parent = new Parent();
     Child* child1 = new Child(parent.GiveLink());
     Child* child2 = new Child();
     Child* child3 = new Child(parent.GiveLink());
     
+    child2->linkPtr = child1->linkPtr;
+    
     child1->Show();
+    
     delete child1;
+    
+    child2->Show();
     
     parent.Destroy();
     child2->Show();
     child3->Show();
     delete child2;
     delete child3;
-    return 0 ;
+    return 0;
 }
+
 
